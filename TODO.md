@@ -1,5 +1,4 @@
  - [ ] Toml support
  - [ ] Editing dictionaries
  - [ ] Saving dictionaries
- - [ ] Ensure thread-safeness
  - [ ] Add file filter to Cascade::from_dirpath
