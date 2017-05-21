@@ -10,8 +10,24 @@ use std::path::Path;
 
 pub mod dict;
 
+pub struct Cascade {
+    dicts: Vec<dict::Dictionary>,
+}
+
+impl Cascade {
+    pub fn translate<'a, 'b>(&'a self, key: &'b str) -> Option<&'a str> {
+        for dict in &self.dicts {
+            if let Some(x) = dict.translate(key) {
+                return Some(&x);
+            }
+        }
+        return None;
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use ::*;
     use ::dict::*;
     use std::thread;
 
@@ -36,4 +52,15 @@ mod tests {
         assert_eq!(d.translate("e.f").unwrap(), "g");
         assert_eq!(d.translate("e.h").unwrap(), "i");
     }
+
+    #[test]
+    fn test_cascade() {
+        let d1 = from_json_str("{\"lang\":\"ja\", \"delimiter\": \".\", \"map\":{\"a\":\"b\"}}").unwrap();
+        let d2 = from_json_str("{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}").unwrap();
+        let ds = vec![d1, d2];
+        let c = Cascade{dicts: ds};
+        assert_eq!(c.translate("a").unwrap(), "b");
+        assert_eq!(c.translate("x").unwrap(), "y");
+    }
+
 }

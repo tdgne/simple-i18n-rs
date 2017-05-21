@@ -6,11 +6,6 @@ use ::serde;
 use ::serde_derive;
 use ::serde_json;
 
-pub trait Translator {
-    fn translate(&self, &str) -> Option<&String>;
-    fn language_name(&self) -> &String;
-}
-
 pub trait HasMutableMap {
     fn insert(&mut self, &str, &str);
     fn remove(&mut self, &str);
@@ -26,10 +21,10 @@ impl Dictionary {
     }
 }
 
-impl Translator for Dictionary {
-    fn translate(&self, text: &str) -> Option<&String> {
+impl Dictionary {
+    pub fn translate(&self, key: &str) -> Option<&String> {
         let mut m = &self.map;
-        for k in text.split(&self.delimiter) {
+        for k in key.split(&self.delimiter) {
             match m.get(k) {
                 Some(&PreDictValue::String(ref string)) => {
                     return Some(string);
@@ -42,7 +37,7 @@ impl Translator for Dictionary {
         }
         return None;
     }
-    fn language_name(&self) -> &String {
+    pub fn language_name(&self) -> &String {
         return &self.lang;
     }
 }

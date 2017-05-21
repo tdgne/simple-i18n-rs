@@ -1,4 +1,5 @@
- - [ ] Cascading dictionaries
+ - [ ] Make calling cascades easier
+ - [ ] Simplify unwrapping
  - [ ] Toml support
  - [ ] Editing dictionaries
  - [ ] Saving dictionaries
