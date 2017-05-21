@@ -23,13 +23,15 @@ pub trait HasMutableMap {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Dictionary {
     lang: String,
+    delimiter: String,
     map: HashMap<String, String>,
 }
 
 impl Dictionary {
-    pub fn new(lang: &str) -> Dictionary {
+    pub fn new(lang: &str, delimiter: &str) -> Dictionary {
         Dictionary {
             lang: lang.to_string(),
+            delimiter: delimiter.to_string(),
             map: HashMap::new(),
         }
     }
@@ -59,9 +61,57 @@ impl HasMutableMap for Dictionary {
     }
 }
 
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PreDictionary<T> {
+    lang: String,
+    delimiter: String,
+    map: T,
+}
+
+fn pd2d(pd: &PreDictionary<HashMap<String, serde_json::Value>>) -> Dictionary {
+    let delimiter = &pd.delimiter;
+    let mut hm: HashMap<String, serde_json::Value> = pd.map.clone();
+    let mut d: Dictionary = Dictionary::new(&pd.lang, delimiter);
+    let mut end_flag = false;
+    
+    // Recursively concatenate keys to generate a flat dictionary.
+    while !end_flag {
+        end_flag = true;
+        let hmcopy = hm.clone();
+        for k in hmcopy.keys() {
+            match hmcopy.get(k) {
+                Some(&serde_json::Value::Object(ref x)) => {
+                    hm.remove(k);
+                    for xk in x.keys() {
+                        if let Some(xv) = x.get(xk) {
+                            hm.insert(String::new() + k + delimiter + xk, xv.clone());
+                            if let &serde_json::Value::Object(_) = xv {
+                                end_flag = false;
+                            }
+                        }
+                    }
+                },
+                _ => continue,
+            }
+        }
+    }
+    let mut resmap: HashMap<String, String> = HashMap::new();
+    for (k, v) in &hm {
+        match v {
+            &serde_json::Value::String(ref sv) => {
+                resmap.insert(k.clone(), sv.clone());
+            },
+            _ => continue,
+        }
+    }
+    d.map = resmap;
+    return d;
+}
+
 pub fn from_json_str(json: &str) -> Result<Dictionary, &str> {
-    if let Ok(d) = serde_json::from_str(json) {
-        return Ok(d);
+    if let Ok(pd) = serde_json::from_str(json) {
+        return Ok(pd2d(&pd));
     }
     return Err("Parse error");
 }
@@ -84,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_insert_remove_translate() {
-        let mut d = Dictionary::new("test");
+        let mut d = Dictionary::new("test", ".");
         d.insert("key1", "value1");
         d.insert("key2", "value2");
         assert_eq!(d.translate("key1").unwrap(), "value1");
@@ -103,9 +153,11 @@ mod tests {
 
     #[test]
     fn test_loading() {
-        let d = from_json_str("{\"lang\":\"en\", \"map\":{\"a\":\"b\",\"c\":\"d\"}}").unwrap();
+        let d = from_json_str("{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"b\",\"c\":\"d\", \"e\": {\"f\": \"g\", \"h\": \"i\"}}}").unwrap();
         assert_eq!(d.translate("a").unwrap(), "b");
         assert_eq!(d.translate("c").unwrap(), "d");
+        assert_eq!(d.translate("e.f").unwrap(), "g");
+        assert_eq!(d.translate("e.h").unwrap(), "i");
     }
 
 }
