@@ -1,6 +1,6 @@
- - [ ] Make calling cascades easier
- - [ ] Simplify unwrapping
  - [ ] Toml support
  - [ ] Editing dictionaries
  - [ ] Saving dictionaries
  - [ ] Ensure thread-safeness
+ - [ ] Test file/dir loading
+ - [ ] Add file filter to Cascade::from_dirpath
