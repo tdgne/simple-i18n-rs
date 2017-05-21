@@ -1,3 +1,4 @@
+ - [ ] Cascading dictionaries
  - [ ] Toml support
  - [ ] Editing dictionaries
  - [ ] Saving dictionaries
