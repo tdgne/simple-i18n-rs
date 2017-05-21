@@ -4,8 +4,10 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
+use std::error;
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{File, read_dir};
+use std::path;
 use std::path::Path;
 
 pub mod dict;
@@ -15,6 +17,23 @@ pub struct Cascade {
 }
 
 impl Cascade {
+    pub fn from_filepaths(files: &Vec<&str>) -> Result<Cascade, Box<error::Error>> {
+        let mut ds: Vec<dict::Dictionary> = Vec::new();
+        for f in files {
+            ds.push(try!(dict::from_json_filepath(f)));
+        }
+        Ok(Cascade{dicts: ds})
+    }
+    pub fn from_dirpath(dir: &str) -> Result<Cascade, Box<error::Error>> {
+        let rd = try!(read_dir(dir));
+        let mut v:Vec<String> = Vec::new();
+        for f in rd {
+            if let Some(pathstr) = try!(f).path().to_str() {
+                v.push(pathstr.to_string());
+            }
+        }
+        return Cascade::from_filepaths((&v.iter().map(|s| &*s as &str).collect::<Vec<&str>>()));
+    }
     pub fn translate<'a, 'b>(&'a self, key: &'b str) -> Option<&'a str> {
         for dict in &self.dicts {
             if let Some(x) = dict.translate(key) {
@@ -59,8 +78,11 @@ mod tests {
         let d2 = from_json_str("{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}").unwrap();
         let ds = vec![d1, d2];
         let c = Cascade{dicts: ds};
+        let t = |key| c.translate(key).unwrap();
         assert_eq!(c.translate("a").unwrap(), "b");
         assert_eq!(c.translate("x").unwrap(), "y");
+        assert_eq!(t("a"), "b");
+        assert_eq!(t("x"), "y");
     }
 
 }

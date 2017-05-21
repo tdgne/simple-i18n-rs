@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
+use std::io::{BufReader, Read};
+use std::error;
 
 use ::serde;
 use ::serde_derive;
@@ -83,22 +85,17 @@ fn pd2d(pd: &PreDictionary<serde_json::map::Map<String, serde_json::Value>>) -> 
     return d;
 }
 
-pub fn from_json_str(json: &str) -> Result<Dictionary, &str> {
-    if let Ok(pd) = serde_json::from_str(json) {
-        return Ok(pd2d(&pd));
-    }
-    return Err("Parse error");
+pub fn from_json_str(json: &str) -> Result<Dictionary, Box<error::Error>> {
+    let pd = try!(serde_json::from_str(json));
+    return Ok(pd2d(&pd));
 }
 
-pub fn from_json_file<P: AsRef<Path>>(path: P) -> Result<Dictionary, &'static str> {
-    if let Ok(file) = File::open(path) {
-        if let Ok(pd) = serde_json::from_reader(file) {
-            return Ok(pd2d(&pd));
-        }else{
-            return Err("Parse error");
-        }
-    }
-    return Err("File error");
+pub fn from_json_filepath<P: AsRef<Path>>(path: P) -> Result<Dictionary, Box<error::Error>> {
+    let file = try!(File::open(path));
+    let mut br = BufReader::new(file);
+    let mut json = String::new();
+    try!(br.read_to_string(&mut json));
+    return from_json_str(&json);
 }
 
 
