@@ -7,6 +7,7 @@ extern crate serde_json;
 #[cfg(test)]
 extern crate tempdir;
 
+use std::path;
 use std::error;
 use std::fs;
 
@@ -17,22 +18,22 @@ pub struct Cascade {
 }
 
 impl Cascade {
-    pub fn from_filepaths(files: &Vec<&str>) -> Result<Cascade, Box<error::Error>> {
+    pub fn from_filepath_strs(files: &Vec<&str>) -> Result<Cascade, Box<error::Error>> {
         let mut ds: Vec<dict::Dictionary> = Vec::new();
         for f in files {
             ds.push(try!(dict::from_json_filepath(f)));
         }
         Ok(Cascade{dicts: ds})
     }
-    pub fn from_dirpath(dir: &str) -> Result<Cascade, Box<error::Error>> {
+    pub fn from_dirpath<P: AsRef<path::Path>>(dir: P) -> Result<Cascade, Box<error::Error>> {
         let rd = try!(fs::read_dir(dir));
-        let mut v:Vec<String> = Vec::new();
+        let mut v:Vec<Box<String>> = Vec::new();
         for f in rd {
             if let Some(pathstr) = try!(f).path().to_str() {
-                v.push(pathstr.to_string());
+                v.push(Box::new(pathstr.to_string()));
             }
         }
-        return Cascade::from_filepaths((&v.iter().map(|s| &*s as &str).collect::<Vec<&str>>()));
+        return Cascade::from_filepath_strs((&v.iter().map(|s| &*s as &str).collect::<Vec<&str>>()));
     }
     pub fn translate<'a, 'b>(&'a self, key: &'b str) -> Option<&'a str> {
         for dict in &self.dicts {
@@ -65,7 +66,7 @@ mod tests {
     */
 
     #[test]
-    fn test_loading() {
+    fn test_loading_from_json_str() {
         let d = from_json_str("{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"b\",\"c\":\"d\", \"e\": {\"f\": \"g\", \"h\": \"i\"}}}").unwrap();
         assert_eq!(d.translate("a").unwrap(), "b");
         assert_eq!(d.translate("c").unwrap(), "d");
