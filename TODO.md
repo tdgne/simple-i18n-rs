@@ -1,2 +1,4 @@
+ - [ ] Toml support
+ - [ ] Editing dictionaries
  - [ ] Saving dictionaries
  - [ ] Ensure thread-safeness
