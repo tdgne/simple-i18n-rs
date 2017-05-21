@@ -4,9 +4,7 @@ use std::path::Path;
 use std::io::{BufReader, Read};
 use std::error;
 
-use ::serde;
-use ::serde_derive;
-use ::serde_json;
+use serde_json;
 
 pub trait HasMutableMap {
     fn insert(&mut self, &str, &str);
@@ -81,7 +79,7 @@ fn pd2d(pd: &PreDictionary<serde_json::map::Map<String, serde_json::Value>>) -> 
         return generic_hm;
     }
 
-    let mut d: Dictionary = Dictionary{lang: pd.lang.clone(), delimiter: delimiter.clone(), map: recpd(&pd.map)};
+    let d: Dictionary = Dictionary{lang: pd.lang.clone(), delimiter: delimiter.clone(), map: recpd(&pd.map)};
     return d;
 }
 

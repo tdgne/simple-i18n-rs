@@ -4,11 +4,11 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
+#[cfg(test)]
+extern crate tempdir;
+
 use std::error;
-use std::collections::HashMap;
-use std::fs::{File, read_dir};
-use std::path;
-use std::path::Path;
+use std::fs;
 
 pub mod dict;
 
@@ -25,7 +25,7 @@ impl Cascade {
         Ok(Cascade{dicts: ds})
     }
     pub fn from_dirpath(dir: &str) -> Result<Cascade, Box<error::Error>> {
-        let rd = try!(read_dir(dir));
+        let rd = try!(fs::read_dir(dir));
         let mut v:Vec<String> = Vec::new();
         for f in rd {
             if let Some(pathstr) = try!(f).path().to_str() {
@@ -48,7 +48,8 @@ impl Cascade {
 mod tests {
     use ::*;
     use ::dict::*;
-    use std::thread;
+    use std::fs::File;
+    use std::io::Write;
 
     #[test]
     fn test_insert_remove_translate() {
@@ -83,6 +84,26 @@ mod tests {
         assert_eq!(c.translate("x").unwrap(), "y");
         assert_eq!(t("a"), "b");
         assert_eq!(t("x"), "y");
+    }
+
+    #[test]
+    fn test_cascade_from_dir() {
+        let tmpdir = tempdir::TempDir::new("test").unwrap();
+        let s1 = "{\"lang\":\"ja\", \"delimiter\": \".\", \"map\":{\"a\":\"b\"}}";
+        let s2 = "{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}";
+        let mut f1 = File::create(tmpdir.path().join("1.json")).unwrap();
+        let mut f2 = File::create(tmpdir.path().join("2.json")).unwrap();
+        let _ = f1.write_all(s1.as_bytes());
+        let _ = f2.write_all(s2.as_bytes());
+
+        let c = Cascade::from_dirpath(&tmpdir.path().to_str().unwrap()).unwrap();
+        let t = |key| c.translate(key).unwrap();
+        assert_eq!(c.translate("a").unwrap(), "b");
+        assert_eq!(c.translate("x").unwrap(), "y");
+        assert_eq!(t("a"), "b");
+        assert_eq!(t("x"), "y");
+
+        tmpdir.close().unwrap();
     }
 
 }
