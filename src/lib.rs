@@ -51,9 +51,9 @@ mod tests {
     use std::fs::File;
     use std::io::Write;
 
+    /*
     #[test]
     fn test_insert_remove_translate() {
-        /*
         let mut d = Dictionary::new("test", ".");
         d.insert("key1", "value1");
         d.insert("key2", "value2");
@@ -61,8 +61,8 @@ mod tests {
         assert_eq!(d.translate("key2").unwrap(), "value2");
         d.remove("key2");
         assert_eq!(d.translate("key1").unwrap(), "value1");
-        */
     }
+    */
 
     #[test]
     fn test_loading() {
@@ -105,5 +105,4 @@ mod tests {
 
         tmpdir.close().unwrap();
     }
-
 }

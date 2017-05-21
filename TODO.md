@@ -2,3 +2,4 @@
  - [ ] Editing dictionaries
  - [ ] Saving dictionaries
  - [ ] Add file filter to Cascade::from_dirpath
+ - [ ] Properly accept Paths as args in from_filepaths and from_dirpath
