@@ -1,4 +1,4 @@
- - [ ] Toml support
  - [ ] Editing dictionaries
  - [ ] Saving dictionaries
  - [ ] Add file filter to Cascade::from_dirpath
+ - [ ] Make the order within the cascade configurable
