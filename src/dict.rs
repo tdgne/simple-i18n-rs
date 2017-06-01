@@ -110,4 +110,36 @@ pub fn from_toml_filepath<P: AsRef<Path>>(path: P) -> Result<Dictionary, Box<err
     return from_toml_str(&toml);
 }
 
+#[cfg(test)]
+mod tests {
+    use ::dict::*;
 
+    #[test]
+    fn test_loading_from_json_str() {
+        let d = from_json_str("{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"b\",\"c\":\"d\", \"e\": {\"f\": \"g\", \"h\": \"i\"}}}").unwrap();
+        assert_eq!(d.translate("a").unwrap(), "b");
+        assert_eq!(d.translate("c").unwrap(), "d");
+        assert_eq!(d.translate("e.f").unwrap(), "g");
+        assert_eq!(d.translate("e.h").unwrap(), "i");
+    }
+
+    #[test]
+    fn test_loading_from_toml_str() {
+        let d = from_toml_str(r#"
+            lang = "ja"
+            delimiter = "."
+
+            [map]
+            a = "b"
+            c = "d"
+
+            [map.e]
+            f = "g"
+            h = "i"
+        "#).unwrap();
+        assert_eq!(d.translate("a").unwrap(), "b");
+        assert_eq!(d.translate("c").unwrap(), "d");
+        assert_eq!(d.translate("e.f").unwrap(), "g");
+        assert_eq!(d.translate("e.h").unwrap(), "i");
+    }
+}

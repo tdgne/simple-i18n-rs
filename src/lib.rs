@@ -64,48 +64,6 @@ mod tests {
     use std::fs::File;
     use std::io::Write;
 
-    /*
-    #[test]
-    fn test_insert_remove_translate() {
-        let mut d = Dictionary::new("test", ".");
-        d.insert("key1", "value1");
-        d.insert("key2", "value2");
-        assert_eq!(d.translate("key1").unwrap(), "value1");
-        assert_eq!(d.translate("key2").unwrap(), "value2");
-        d.remove("key2");
-        assert_eq!(d.translate("key1").unwrap(), "value1");
-    }
-    */
-
-    #[test]
-    fn test_loading_from_json_str() {
-        let d = from_json_str("{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"b\",\"c\":\"d\", \"e\": {\"f\": \"g\", \"h\": \"i\"}}}").unwrap();
-        assert_eq!(d.translate("a").unwrap(), "b");
-        assert_eq!(d.translate("c").unwrap(), "d");
-        assert_eq!(d.translate("e.f").unwrap(), "g");
-        assert_eq!(d.translate("e.h").unwrap(), "i");
-    }
-
-    #[test]
-    fn test_loading_from_toml_str() {
-        let d = from_toml_str(r#"
-            lang = "ja"
-            delimiter = "."
-
-            [map]
-            a = "b"
-            c = "d"
-
-            [map.e]
-            f = "g"
-            h = "i"
-        "#).unwrap();
-        assert_eq!(d.translate("a").unwrap(), "b");
-        assert_eq!(d.translate("c").unwrap(), "d");
-        assert_eq!(d.translate("e.f").unwrap(), "g");
-        assert_eq!(d.translate("e.h").unwrap(), "i");
-    }
-
     #[test]
     fn test_cascade() {
         let d1 = from_json_str("{\"lang\":\"ja\", \"delimiter\": \".\", \"map\":{\"a\":\"b\"}}").unwrap();
