@@ -22,6 +22,17 @@ impl Cascade {
     pub fn from_filepath_strs(files: &Vec<&str>) -> Result<Cascade, Box<error::Error>> {
         let mut ds: Vec<dict::Dictionary> = Vec::new();
         for f in files {
+            if let Some(ext) = path::Path::new(f).extension() {
+                if ext == "json" {
+                    ds.push(try!(dict::from_json_filepath(f)));
+                    continue;
+                }else if ext == "toml" {
+                    ds.push(try!(dict::from_toml_filepath(f)));
+                    continue;
+                }
+            }
+
+            // Try to read it as json if the file type couldn't be guessed from its extension.
             ds.push(try!(dict::from_json_filepath(f)));
         }
         Ok(Cascade{dicts: ds})
@@ -113,17 +124,30 @@ mod tests {
         let tmpdir = tempdir::TempDir::new("test").unwrap();
         let s1 = "{\"lang\":\"ja\", \"delimiter\": \".\", \"map\":{\"a\":\"b\"}}";
         let s2 = "{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}";
+        let s3 = r#"
+            lang = "t"
+            delimiter = "."
+
+            [map]
+            a = "d"
+            z = "Z"
+        "#;
+
         let mut f1 = File::create(tmpdir.path().join("1.json")).unwrap();
         let mut f2 = File::create(tmpdir.path().join("2.json")).unwrap();
+        let mut f3 = File::create(tmpdir.path().join("3.toml")).unwrap();
         let _ = f1.write_all(s1.as_bytes());
         let _ = f2.write_all(s2.as_bytes());
+        let _ = f3.write_all(s3.as_bytes());
 
         let c = Cascade::from_dirpath(&tmpdir.path().to_str().unwrap()).unwrap();
         let t = |key| c.translate(key).unwrap();
         assert_eq!(c.translate("a").unwrap(), "b");
         assert_eq!(c.translate("x").unwrap(), "y");
+        assert_eq!(c.translate("z").unwrap(), "Z");
         assert_eq!(t("a"), "b");
         assert_eq!(t("x"), "y");
+        assert_eq!(t("z"), "Z");
 
         tmpdir.close().unwrap();
     }

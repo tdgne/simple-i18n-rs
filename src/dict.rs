@@ -102,5 +102,12 @@ pub fn from_toml_str(toml: &str) -> Result<Dictionary, Box<error::Error>> {
     return Ok(pd2d(&pd));
 }
 
+pub fn from_toml_filepath<P: AsRef<Path>>(path: P) -> Result<Dictionary, Box<error::Error>> {
+    let file = try!(File::open(path));
+    let mut br = BufReader::new(file);
+    let mut toml = String::new();
+    try!(br.read_to_string(&mut toml));
+    return from_toml_str(&toml);
+}
 
 
