@@ -5,6 +5,7 @@ use std::io::{BufReader, Read};
 use std::error;
 
 use serde_json;
+use toml;
 
 pub trait HasMutableMap {
     fn insert(&mut self, &str, &str);
@@ -95,5 +96,11 @@ pub fn from_json_filepath<P: AsRef<Path>>(path: P) -> Result<Dictionary, Box<err
     try!(br.read_to_string(&mut json));
     return from_json_str(&json);
 }
+
+pub fn from_toml_str(toml: &str) -> Result<Dictionary, Box<error::Error>> {
+    let pd = try!(toml::from_str(toml));
+    return Ok(pd2d(&pd));
+}
+
 
 
