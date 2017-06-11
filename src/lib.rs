@@ -15,29 +15,30 @@ use std::fs;
 pub mod dict;
 
 pub struct Cascade {
-    dicts: Vec<dict::Dictionary>,
+    pub dicts: Vec<dict::Dictionary>,
 }
 
 impl Cascade {
-    pub fn from_filepath_strs(files: &Vec<&str>) -> Result<Cascade, Box<error::Error>> {
+    pub fn with_filepath_strs(files: &Vec<&str>, delimiter: &str) -> Result<Cascade, Box<error::Error>> {
         let mut ds: Vec<dict::Dictionary> = Vec::new();
         for f in files {
             if let Some(ext) = path::Path::new(f).extension() {
                 if ext == "json" {
-                    ds.push(try!(dict::from_json_filepath(f)));
+                    ds.push(try!(dict::Dictionary::with_json_filepath(f, delimiter)));
                     continue;
                 }else if ext == "toml" {
-                    ds.push(try!(dict::from_toml_filepath(f)));
+                    ds.push(try!(dict::Dictionary::with_toml_filepath(f, delimiter)));
                     continue;
                 }
             }
 
             // Try to read it as json if the file type couldn't be guessed from its extension.
-            ds.push(try!(dict::from_json_filepath(f)));
+            ds.push(try!(dict::Dictionary::with_json_filepath(f, delimiter)));
         }
-        Ok(Cascade{dicts: ds})
+        Ok(Self{dicts: ds})
     }
-    pub fn from_dirpath<P: AsRef<path::Path>>(dir: P) -> Result<Cascade, Box<error::Error>> {
+
+    pub fn with_dirpath<P: AsRef<path::Path>>(dir: P, delimiter: &str) -> Result<Cascade, Box<error::Error>> {
         let rd = try!(fs::read_dir(dir));
         let mut v:Vec<Box<String>> = Vec::new();
         for f in rd {
@@ -45,8 +46,9 @@ impl Cascade {
                 v.push(Box::new(pathstr.to_string()));
             }
         }
-        return Cascade::from_filepath_strs((&v.iter().map(|s| &*s as &str).collect::<Vec<&str>>()));
+        return Self::with_filepath_strs((&v.iter().map(|s| &*s as &str).collect::<Vec<&str>>()), delimiter);
     }
+
     pub fn translate<'a, 'b>(&'a self, key: &'b str) -> Option<&'a str> {
         for dict in &self.dicts {
             if let Some(x) = dict.translate(key) {
@@ -66,8 +68,8 @@ mod tests {
 
     #[test]
     fn test_cascade() {
-        let d1 = from_json_str("{\"lang\":\"ja\", \"delimiter\": \".\", \"map\":{\"a\":\"b\"}}").unwrap();
-        let d2 = from_json_str("{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}").unwrap();
+        let d1 = Dictionary::with_json_str("{\"name\":\"ja\", \"map\":{\"a\":\"b\"}}", ".").unwrap();
+        let d2 = Dictionary::with_json_str("{\"name\":\"en\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}", ".").unwrap();
         let ds = vec![d1, d2];
         let c = Cascade{dicts: ds};
         let t = |key| c.translate(key).unwrap();
@@ -80,11 +82,10 @@ mod tests {
     #[test]
     fn test_cascade_from_dir() {
         let tmpdir = tempdir::TempDir::new("test").unwrap();
-        let s1 = "{\"lang\":\"ja\", \"delimiter\": \".\", \"map\":{\"a\":\"b\"}}";
-        let s2 = "{\"lang\":\"en\", \"delimiter\": \".\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}";
+        let s1 = "{\"name\":\"ja\", \"map\":{\"a\":\"b\"}}";
+        let s2 = "{\"name\":\"en\", \"map\":{\"a\":\"c\", \"x\":\"y\"}}";
         let s3 = r#"
-            lang = "t"
-            delimiter = "."
+            name = "t"
 
             [map]
             a = "d"
@@ -98,7 +99,7 @@ mod tests {
         let _ = f2.write_all(s2.as_bytes());
         let _ = f3.write_all(s3.as_bytes());
 
-        let c = Cascade::from_dirpath(&tmpdir.path().to_str().unwrap()).unwrap();
+        let c = Cascade::with_dirpath(&tmpdir.path().to_str().unwrap(), ".").unwrap();
         let t = |key| c.translate(key).unwrap();
         assert_eq!(c.translate("a").unwrap(), "b");
         assert_eq!(c.translate("x").unwrap(), "y");
