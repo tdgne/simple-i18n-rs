@@ -13,27 +13,28 @@ use std::error;
 use std::fs;
 
 pub mod dict;
+pub use dict::Dictionary;
 
 pub struct Cascade {
-    pub dicts: Vec<dict::Dictionary>,
+    pub dicts: Vec<Dictionary>,
 }
 
 impl Cascade {
     pub fn with_filepath_strs(files: &Vec<&str>, delimiter: &str) -> Result<Cascade, Box<error::Error>> {
-        let mut ds: Vec<dict::Dictionary> = Vec::new();
+        let mut ds: Vec<Dictionary> = Vec::new();
         for f in files {
             if let Some(ext) = path::Path::new(f).extension() {
                 if ext == "json" {
-                    ds.push(try!(dict::Dictionary::with_json_filepath(f, delimiter)));
+                    ds.push(try!(Dictionary::with_json_filepath(f, delimiter)));
                     continue;
                 }else if ext == "toml" {
-                    ds.push(try!(dict::Dictionary::with_toml_filepath(f, delimiter)));
+                    ds.push(try!(Dictionary::with_toml_filepath(f, delimiter)));
                     continue;
                 }
             }
 
             // Try to read it as json if the file type couldn't be guessed from its extension.
-            ds.push(try!(dict::Dictionary::with_json_filepath(f, delimiter)));
+            ds.push(try!(Dictionary::with_json_filepath(f, delimiter)));
         }
         Ok(Self{dicts: ds})
     }
@@ -62,7 +63,6 @@ impl Cascade {
 #[cfg(test)]
 mod tests {
     use ::*;
-    use ::dict::*;
     use std::fs::File;
     use std::io::Write;
 
